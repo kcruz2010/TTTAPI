@@ -131,3 +131,7 @@
 - **StringMessage**
     * General purpose String container.
 # TTTAPI
+
+Third party resources:
+[Google API doc](https://cloud.google.com/appengine/docs/python/refdocs/)
+[Skeleton Game](https://github.com/udacity/FSND-P4-Design-A-Game/blob/master/Skeleton%20Project%20Guess-a-Number/api.py)
