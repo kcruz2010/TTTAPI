@@ -1,0 +1,27 @@
+Design process: 
+
+At first I used the skeleton game provided by udacity as a starting point and build a tic-tac-to api game.
+
+***Game Model***
+
+My goal is to provide an easy to use  tic-tac-toe game, but ran into problems in trying to implement the actual game tic-tac-toe game. So, I broke the problem into bite size pieces.
+
+*First, I went with the traditional board game 3x3 
+
+*I started off  with the tic-tac-toe board game by creating a field in model.py to store the tic-tac-toe board game. I was looking for a covinient way to store and record the state of the board, so I went with 'Pickleproperty' for that reason; which allowed me to store python list in the datastore.
+
+*Next I moved on to players which are 'player_x' and 'player_o' , and then added 'nextMove' and 'winner' all KeyProperty to Game model as somewhat a 'tracking device'  for which User was X or O and who's turn is it? Following the rules of tic-tac-toe 
+
+* The games were completed by 'game_over' to mark end of tic-tac-toe game
+
+***Score Model***
+
+* As a result I had multitude of games resulted in different outcomes that needed to be modified.
+
+* The result field of the game contains three values : player_x, player_o, and tie; reason being  that keeping the outcome in a booleanfield was quiet challenging and as a result storing results in stringfield in score model limiting to 3 values or outcomes. 
+
+* Score: Win equals 3 points. Draw equals 1 point. Lost equals 0 points
+
+
+
+
