@@ -45,7 +45,7 @@ class TicTacToeApi(remote.Service):
         if not mail.is_email_valid(request.user_name):
             raise endpoints.ConflictException(
                     'Not a good email address')
-        user = user(name=request.user_name, email=request.email)
+        user = User(name=request.user_name, email=request.email)
         user.put()
         return StringMessage(message='user {} created!'.format(
                 request.user_name))
