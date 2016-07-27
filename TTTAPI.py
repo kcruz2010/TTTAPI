@@ -45,9 +45,9 @@ class TicTacToeApi(remote.Service):
         if not mail.is_email_valid(request.user_name):
             raise endpoints.ConflictException(
                     'Not a good email address')
-        user = User(name=request.user_name, email=request.email)
+        user = user(name=request.user_name, email=request.email)
         user.put()
-        return StringMessage(message='User {} created!'.format(
+        return StringMessage(message='user {} created!'.format(
                 request.user_name))
 
     @endpoints.method(request_message=NEW_GAME_REQUEST,
@@ -66,7 +66,7 @@ class TicTacToeApi(remote.Service):
 # Board size
         boardSize = 3
         if request.boardSize:
-            if request.boardSize < 3 or request.boardsize > 3:
+            if request.boardSize < 3 or request.boardSize > 3:
                 raise endpoints.BadRequestException('Board Size not valid!'
                                                     'Must have the value of 3')
 
