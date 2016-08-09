@@ -11,10 +11,25 @@ from google.appengine.api import memcache, mail
 from google.appengine.api import taskqueue
 from google.appengine.ext import ndb
 
-from models import User, Game, Score
-from forms import StringMessage, NewGameForm, GameForm, GameForms, MakeMoveForm,\
-    ScoreForms, UserForms
-from utils import get_by_urlsafe, check_winner, check_full
+from models import (
+    User, 
+    Game, 
+    Score,
+)
+from forms import (
+    StringMessage, 
+    NewGameForm, 
+    GameForm, 
+    GameForms, 
+    MakeMoveForm,
+    ScoreForms, 
+    UserForms
+)
+from utils import (
+    get_by_urlsafe,
+    check_winner, 
+    check_full
+)
 
 NEW_GAME_REQUEST = endpoints.ResourceContainer(NewGameForm)
 GET_GAME_REQUEST = endpoints.ResourceContainer(
@@ -47,7 +62,7 @@ class TicTacToeApi(remote.Service):
                     'Not a good email address')
         user = User(name=request.user_name, email=request.email)
         user.put()
-        return StringMessage(message='user {} created!'.format(
+        return StringMessage(message='User {} created!'.format(
                 request.user_name))
 
     @endpoints.method(request_message=NEW_GAME_REQUEST,
@@ -65,12 +80,9 @@ class TicTacToeApi(remote.Service):
               'User % does not exists!' % wrong_user.name)
 # Board size
         boardSize = 3
-        if request.boardSize:
-            if request.boardSize < 3 or request.boardSize > 3:
-                raise endpoints.BadRequestException('Board Size not valid!'
-                                                    'Must have the value of 3')
-
-            boardSize = request.boardSize
+        if not boardSize: 
+            raise endpoints.BadRequestException('Board Size not valid')
+  
         game = Game.new_game(player_x.key, player_o.key, boardSize)
 
         return game.to_form()
@@ -85,9 +97,11 @@ class TicTacToeApi(remote.Service):
         game = get_by_urlsafe(request.urlsafe_game_key, Game)
         if game and not game.game_over:
             game.key.delete()
-            return StringMessage(message='')
+            return StringMessage(message='Game with key: {} deleted'.format(request.urlsafe_game_key))
+        elif game.game_over:
+            raise endpoints.BadRequestException('Game over!')
         else:
-            raise endpoints.NotFoundException('Game not found!')
+            raise endpoints.NotFoundException('Game is not found!')
 
     @endpoints.method(request_message=GET_GAME_REQUEST,
                       response_message=GameForm,
@@ -113,7 +127,7 @@ class TicTacToeApi(remote.Service):
         if not game:
             raise endpoints.NotFoundException('Game not found')
         if game.game_over:
-            return game.to_form('Game already over!')
+            raise endpoints.NotFoundException('Game already over!')
 
 # Prevent a user from playing twice back to back
         user = User.get_current_user(request.user_name)
@@ -180,12 +194,12 @@ class TicTacToeApi(remote.Service):
 
     @endpoints.method(request_message=USER_REQUEST,
                       response_message=GameForms,
-                      path='user/games',
+                      path='usergames',
                       name='get_user_games',
                       http_method='GET')
     def get_user_games(self, request):
         """Return active games for Users"""
-        User = User.get_current_user(request.user_name)
+        user = User.get_current_user(request.user_name)
         if not user:
             raise endpoints.BadRequestException('User not found!')
         games = Game.query(ndb.OR(Game.player_x == user.key,
@@ -196,7 +210,7 @@ class TicTacToeApi(remote.Service):
                       path='games/finished_games',
                       name='get_finished_games',
                       http_method='GET')
-    def get_finished_games(self):
+    def get_finished_games(self, request):
         """Get the cached number of games finished"""
         return StringMessage(message=memcache.get(MEMCACHE_GAMES_PLAYED) or '')
 
@@ -205,12 +219,13 @@ class TicTacToeApi(remote.Service):
         """Populates memcache with the number of games finished"""
         games = Game.query(Game.game_over == False).fetch()
         if games:
-            count = len(games)
+            cont = len(games)
             memcache.set(MEMCACHE_GAMES_PLAYED, 'The games finished number is %s' % cont),
 
-    @endpoints.method(response_message=UserForms,
-                      path='user/ranking',
-                      name='get_user_rankings',
+    @endpoints.method(request_message=GET_GAME_REQUEST,
+                      response_message=StringMessage,
+                      path='game/{urlsafe_game_key}/history',
+                      name='get_game_history',
                       http_method='GET')
     def get_game_history(self, request):
         """Return history of User's play"""
@@ -218,6 +233,16 @@ class TicTacToeApi(remote.Service):
         if not game:
             raise endpoints.NotFoundException('Game not found')
         return StringMessage(message=str(game.game_history))
+
+    @endpoints.method(response_message=UserForms,
+                      path='user/ranking',
+                      name='get_user_rankings',
+                      http_method='GET')
+    def get_user_rankings(self, request):
+        """Ranking base on win/draw percentage"""
+        users = User.query(User.totalGamePlayed > 0).fetch()
+        users = sorted(users, key=lambda x: x.points, reverse=True)
+        return UserForms(items=[user.to_form()for user in users])
 
 
 api = endpoints.api_server([TicTacToeApi])
